@@ -4,8 +4,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
-  type KeyboardEvent,
   type ReactNode,
 } from "react";
 import {
@@ -14,6 +12,7 @@ import {
   type Slide,
   type Theme,
 } from "@/lib/presentation";
+import EditableText from "@/components/input/EditableText";
 
 type SlideProps = {
   slide: Slide;
@@ -26,65 +25,7 @@ type SlideProps = {
 
 /* ---------- Text that becomes editable in Edit mode ---------- */
 
-type EditableTextProps = {
-  value: string;
-  onCommit?: (text: string) => void;
-  as?: "h2" | "h3" | "p" | "span";
-  className?: string;
-  style?: CSSProperties;
-  allowEmpty?: boolean; // bullets: empty = delete the bullet
-};
 
-function EditableText({
-  value,
-  onCommit,
-  as: Tag = "span",
-  className = "",
-  style,
-  allowEmpty = false,
-}: EditableTextProps) {
-  if (!onCommit) {
-    return (
-      <Tag className={className} style={style}>
-        {value}
-      </Tag>
-    );
-  }
-
-  function handleKeyDown(e: KeyboardEvent<HTMLElement>) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      e.currentTarget.blur(); // Enter = done
-    }
-    if (e.key === "Escape") {
-      e.currentTarget.textContent = value; // Esc = cancel
-      e.currentTarget.blur();
-    }
-  }
-
-  return (
-    <Tag
-      key={value} // a new value from outside resets the editable text
-      contentEditable
-      suppressContentEditableWarning
-      spellCheck
-      onKeyDown={handleKeyDown}
-      onBlur={(e) => {
-        const text = e.currentTarget.textContent?.trim() ?? "";
-        if (!text && !allowEmpty) {
-          e.currentTarget.textContent = value; // never leave a title empty
-          return;
-        }
-        if (text !== value) onCommit(text);
-      }}
-      className={`${className} cursor-text rounded-md outline-none ring-offset-4 ring-offset-transparent transition-shadow hover:ring-2 hover:ring-white/30 focus:ring-2 focus:ring-[#9B7BFF]`}
-      style={style}
-    >
-      {value}
-    </Tag>
-  );
-}
-/* ---------- One slide, always drawn at 960 × 540 ---------- */
 
 export function SlideView({ slide, theme, index, total, deckTitle, onEdit }: SlideProps) {
   return (

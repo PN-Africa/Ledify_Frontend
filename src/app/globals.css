@@ -134,3 +134,57 @@ body {
   from { opacity: 0; transform: scale(0.98); filter: blur(8px); }
   to   { opacity: 1; transform: scale(1); filter: blur(0); }
 }
+@keyframes section-in {
+  from { opacity: 0; transform: translateY(16px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.animate-section-in {
+  animation: section-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-section-in { animation: none; }
+}
+
+/* ---------- Printing a document (Download → Save as PDF) ---------- */
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+
+  /* Hide everything on the page... */
+  body * {
+    visibility: hidden;
+  }
+
+  /* ...except the document paper */
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* No half-finished animations on paper */
+  .print-area * {
+    animation: none !important;
+  }
+
+  /* Keep headings with the text that follows them */
+  .print-area h2,
+  .print-area h3 {
+    break-after: avoid;
+  }
+}

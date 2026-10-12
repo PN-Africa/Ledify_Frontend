@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import { getDraft, type OutputFormat } from "@/lib/draftStore";
 import { SAMPLE_PRESENTATION } from "@/lib/presentation";
+import { SAMPLE_WEBPAGE } from "@/lib/webpage";
+import { SAMPLE_DOCUMENT } from "@/lib/document";
 import PresentationViewer from "@/components/presentation/PresentationViewer";
+import WebPageViewer from "@/components/webpage/WebPageViewer";
+import DocumentViewer from "@/components/DocumentViewer/DocumentViewer";
 
 export default function ResultView() {
   const [format, setFormat] = useState<OutputFormat | null>(null);
 
   useEffect(() => {
-    // No draft (e.g. after a refresh)? Show the sample presentation for now
+    // Show the sample for the format the user picked (presentation if none)
     setFormat(getDraft()?.format ?? "presentation");
   }, []);
 
@@ -18,13 +22,10 @@ export default function ResultView() {
   }
 
   if (format === "presentation") {
-    // TODO: load the real presentation from the backend using the id in the URL
     return <PresentationViewer presentation={SAMPLE_PRESENTATION} />;
   }
-
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0A0D18] px-6 text-center text-[#C9CBD6]">
-      The {format === "webpage" ? "web page" : "document"} viewer is coming next.
-    </main>
-  );
+  if (format === "webpage") {
+    return <WebPageViewer webpage={SAMPLE_WEBPAGE} />;
+  }
+  return <DocumentViewer doc={SAMPLE_DOCUMENT} />;
 }
