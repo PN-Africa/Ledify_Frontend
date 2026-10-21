@@ -2,10 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { DEVICE_WIDTHS, type Device, type WebPage } from "@/lib/webpage";
-import WebPageView from "./webpage";
-
-type Mode = "preview" | "edit";
+import { DEVICE_WIDTHS, type Device } from "@/lib/webpage";
 
 const DEVICES: { id: Device; label: string; icon: ReactNode }[] = [
   { id: "desktop", label: "Desktop", icon: <DesktopIcon /> },
@@ -13,15 +10,23 @@ const DEVICES: { id: Device; label: string; icon: ReactNode }[] = [
   { id: "mobile", label: "Mobile", icon: <MobileIcon /> },
 ];
 
-export default function WebPageViewer({ webpage }: { webpage: WebPage }) {
-  const [page, setPage] = useState<WebPage>(webpage);
-  const [device, setDevice] = useState<Device>("desktop");
-  const [mode, setMode] = useState<Mode>("preview");
-  const canEdit = mode === "edit";
+const FRAME_HEIGHT = 800; // height of the page area before scaling
 
-  function handleDownload() {
-    // TODO: export as an HTML file, or request a deployable site from the backend
-  }
+type Props = {
+  previewUrl: string;
+  downloadUrl: string;
+};
+
+export default function WebPagePreview({ previewUrl, downloadUrl }: Props) {
+  const [device, setDevice] = useState<Device>("desktop");
+  const [loaded, setLoaded] = useState(false);
+
+  // Load the generated site itself, through our own address (the Next.js proxy)
+  const framedUrl = previewUrl
+    .replace(process.env.NEXT_PUBLIC_API_URL ?? "", "")
+    .replace(/\/preview$/, "/site/index.html");
+  console.log("Iframe src:", framedUrl);
+  const downloadLink = downloadUrl.replace(process.env.NEXT_PUBLIC_API_URL ?? "", "");
 
   return (
     <main className="min-h-screen w-full bg-[#0A0D18] px-4 pb-16 pt-28 md:px-6">
@@ -38,7 +43,7 @@ export default function WebPageViewer({ webpage }: { webpage: WebPage }) {
 
           <div className="min-w-0 flex-1">
             <p className="text-xs text-[#8A8FA3]">Web page</p>
-            <h1 className="truncate text-sm font-semibold text-white md:text-base">{page.title}</h1>
+            <h1 className="truncate text-sm font-semibold text-white md:text-base">Your web page</h1>
           </div>
 
           {/* Device preview */}
@@ -60,45 +65,35 @@ export default function WebPageViewer({ webpage }: { webpage: WebPage }) {
             ))}
           </div>
 
-          {/* Preview / Edit */}
-          <div role="group" aria-label="Mode" className="flex rounded-xl border border-white/15 p-1">
-            {(["preview", "edit"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                aria-pressed={mode === m}
-                className={`h-9 rounded-lg px-3 text-sm font-medium capitalize transition ${
-                  mode === m ? "bg-white text-[#0B0D17]" : "text-[#C9CBD6] hover:text-white"
-                }`}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={handleDownload}
+          <a
+            href={downloadLink}
             className="flex h-11 items-center gap-2 rounded-xl bg-[#6C47FF] px-4 text-sm font-semibold text-white transition hover:bg-[#5B38EE]"
           >
             <DownloadIcon />
             <span className="hidden sm:inline">Download</span>
-          </button>
+          </a>
         </header>
 
         {/* ---------- Preview area ---------- */}
         <section className="bg-[#0E1120] p-4 md:p-8">
-          {canEdit && (
-            <p className="mb-4 text-center text-xs text-[#9B7BFF]">
-              Click any text to edit it · hover an image to replace it
-            </p>
-          )}
-
           <ScaledFrame width={DEVICE_WIDTHS[device]}>
             <div className="overflow-hidden rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <BrowserBar />
-              <WebPageView page={page} device={device} onEdit={canEdit ? setPage : undefined} />
+              <div className="relative bg-white" style={{ height: FRAME_HEIGHT }}>
+                {!loaded && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#0B0D17] text-sm text-[#C9CBD6]">
+                    Loading preview…
+                  </div>
+                )}
+                <iframe
+                  src={framedUrl}
+                  title="Generated web page preview"
+                  sandbox="allow-scripts"
+                  referrerPolicy="no-referrer"
+                  onLoad={() => setLoaded(true)}
+                  className="h-full w-full"
+                />
+              </div>
             </div>
           </ScaledFrame>
         </section>

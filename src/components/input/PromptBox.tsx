@@ -79,7 +79,7 @@ export default function PromptBox({
   // useState only uses these starting values on the first render
   const [prompt, setPrompt] = useState(initialDraft?.prompt ?? "");
   const [files, setFiles] = useState<File[]>(initialDraft?.files ?? []);
-  const [links, setLinks] = useState<string[]>(initialDraft?.links ?? []);
+  const [links, setLinks] = useState<string[]>(initialDraft?.link ?? []);
   const [linkInput, setLinkInput] = useState("");
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -194,7 +194,7 @@ export default function PromptBox({
 
   function handleContinue() {
     if (!continueEnabled) return;
-    onContinue({ prompt: prompt.trim(), files, links });
+onContinue({ prompt: prompt.trim(), files, link: links });
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {

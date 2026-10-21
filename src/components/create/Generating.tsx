@@ -10,7 +10,7 @@ import {
   type OutputFormat,
 } from "@/lib/draftStore";
 import { generateContent } from "@/lib/generate";
-
+import { saveResult } from "@/lib/resultStore";
 const STEPS = [
   "Reading your content",
   "Structuring the information",
@@ -62,29 +62,34 @@ export default function Generating() {
   }, [draft, status, activeStep]);
 
   // 3. Run the generation (again each time "attempt" changes)
-  useEffect(() => {
-    if (!draft) return;
-    let cancelled = false; // ignore the result if the user left or retried
+// 3. Run the generation (again each time "attempt" changes)
+useEffect(() => {
+  if (!draft) return;
+  const controller = new AbortController();
+  let redirectTimer: ReturnType<typeof setTimeout> | undefined;
 
-    const minWait = new Promise((resolve) => setTimeout(resolve, MIN_TOTAL_TIME));
+  const minWait = new Promise((resolve) => setTimeout(resolve, MIN_TOTAL_TIME));
 
-    Promise.all([generateContent(draft), minWait])
-      .then(([result]) => {
-        if (cancelled) return;
-        setActiveStep(STEPS.length); // tick everything and fill the bar
-        setTimeout(() => {
-          if (!cancelled) router.push(`/create/result?id=${result.id}`);
-        }, 700); // a short moment to see 100%
-      })
-      .catch(() => {
-        if (!cancelled) setStatus("error");
-      });
+  Promise.all([generateContent(draft, controller.signal), minWait])
+    .then(([result]) => {
+      if (controller.signal.aborted) return;
+      saveResult(result);
+      setActiveStep(STEPS.length);
+      redirectTimer = setTimeout(() => {
+        router.push(`/create/result?id=${result.id}`);
+      }, 700);
+    })
+    .catch((error) => {
+      if (controller.signal.aborted) return; // we cancelled it on purpose, not a real error
+      console.error("Generation failed:", error);
+      setStatus("error");
+    });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [draft, attempt, router]);
-
+  return () => {
+    controller.abort();          // actually stops the first request
+    clearTimeout(redirectTimer); // stops a pending redirect
+  };
+}, [draft, attempt, router]);
   function handleTryAgain() {
     setStatus("generating");
     setActiveStep(0);
@@ -140,8 +145,8 @@ export default function Generating() {
               Your content is being created.
             </h1>
            <p className="mt-3 text-[15px] text-[#C9CBD6]">
-  Ledify is turning your input into a structured {outputDescription}.
-</p>
+            Ledify is turning your input into a structured {outputDescription}.
+          </p>
 
             {/* Progress bar */}
             <div
@@ -201,9 +206,9 @@ export default function Generating() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              <button
-                type="button"
-                onClick={handleTryAgain}
+             <button
+  type="button"
+  onClick={handleTryAgain}
                 className="rounded-xl bg-[#6C47FF] px-9 py-3 text-sm font-semibold text-white transition hover:bg-[#5B38EE]"
               >
                 Try again

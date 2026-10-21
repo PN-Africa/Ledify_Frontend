@@ -14,19 +14,17 @@ const bricolage = Bricolage_Grotesque({
 
 export default function CreateInput() {
   const router = useRouter();
-  // null = still loading the draft
   const [draft, setDraftState] = useState<Draft | null>(null);
 
-  // Read the draft in the browser only (the server has no draft, see below)
-  useEffect(() => {
+   useEffect(() => {
     // Anything typed on the landing page, or an empty box
-    setDraftState(getDraft() ?? { prompt: "", files: [], links: [] });
+    setDraftState(getDraft() ?? { prompt: "", files: [], link: [] });
   }, []);
 
   function handleContinue(next: Draft) {
-    saveDraft(next);
-    router.push("/create/format"); // change to the real next step
-  }
+  saveDraft(next);
+  router.push("/create/format");
+}
 
   return (
     <main className="min-h-screen w-full bg-[#0A0D18] px-6 pb-24 pt-32">

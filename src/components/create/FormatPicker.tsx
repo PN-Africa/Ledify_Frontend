@@ -8,7 +8,7 @@ import {
   setDraft as saveDraft,
   type OutputFormat,
 } from "@/lib/draftStore";
-
+import {generateContent} from "@/lib/generate";
 type FormatOption = {
   id: OutputFormat;
   title: string;
@@ -225,13 +225,13 @@ export default function FormatPicker() {
 
         <div className="mt-12 flex justify-center">
           <button
-            type="button"
-            onClick={handleStart}
-            disabled={!selected}
-            className="rounded-xl bg-[#6C47FF] px-8 py-4 text-base font-semibold text-white transition hover:bg-[#5B38EE] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-[#6C47FF]"
-          >
-            Start generating
-          </button>
+  type="button"
+  onClick={handleStart}
+  disabled={!selected}
+  className="rounded-xl bg-[#6C47FF] px-8 py-4 text-base font-semibold text-white transition hover:bg-[#5B38EE] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-[#6C47FF]"
+>
+  Start generating
+</button>
         </div>
       </div>
     </main>

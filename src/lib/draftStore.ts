@@ -8,7 +8,7 @@ export type DraftOptions = {
 export type Draft = {
   prompt: string;
   files: File[];
-  links: string[];
+  link: string[];
   format?: OutputFormat;
   options?: DraftOptions;
 };
