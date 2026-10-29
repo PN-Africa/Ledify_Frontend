@@ -62,7 +62,7 @@ export default function CtaBanner() {
     { dependencies: [index], scope: sectionRef }
   );
 
-  // ---------- Scroll entrance ----------
+  // ---------- Scroll entrance (circles + text only; the button is always visible) ----------
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
@@ -73,7 +73,7 @@ export default function CtaBanner() {
           scrollTrigger: {
             trigger: sectionRef.current,
             start: "top 80%",
-            toggleActions: "play none none reverse",
+            once: true, // play one time, then leave everything visible
           },
         });
 
@@ -82,18 +82,15 @@ export default function CtaBanner() {
           autoAlpha: 0,
           duration: 1.2,
           stagger: 0.15,
-        })
-          .from(
-            "[data-reveal]",
-            { autoAlpha: 0, y: 30, duration: 0.7, stagger: 0.12 },
-            "-=1"
-          )
-          .from(
-            "[data-cta]",
-            { autoAlpha: 0, scale: 0.9, duration: 0.5, ease: "back.out(2)" },
-            "-=0.4"
-          );
+        }).from(
+          "[data-reveal]",
+          { autoAlpha: 0, y: 30, duration: 0.7, stagger: 0.12 },
+          "-=1"
+        );
       });
+
+      // Undo everything when the component unmounts (or React runs this twice in dev)
+      return () => mm.revert();
     },
     { scope: sectionRef }
   );
@@ -115,7 +112,7 @@ export default function CtaBanner() {
         className="absolute -bottom-40 right-[18%] -z-10 h-[340px] w-[340px] rounded-full bg-white/10"
       />
 
-      <div className="mx-auto relative flex max-w-6xl flex-col items-start gap-10 md:flex-row md:items-center md:justify-between">
+      <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-10 md:flex-row md:items-center md:justify-between">
         <div className="max-w-3xl">
           {/* Screen readers get one clear sentence instead of a word that keeps changing */}
           <h2
@@ -146,8 +143,7 @@ export default function CtaBanner() {
 
         <Link
           href="/#get-started"
-          data-cta
-          className="shrink-0 rounded-xl   bg-[#0B0D17] px-14 py-5 text-lg font-semibold text-white transition hover:bg-[#1A1D2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+          className="shrink-0 rounded-xl bg-[#0B0D17] px-14 py-5 text-lg font-semibold text-white transition hover:bg-[#1A1D2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
         >
           Get Started
         </Link>

@@ -22,55 +22,63 @@ const bricolage = Bricolage_Grotesque({
 
 type FaqItem = { question: string; answer: ReactNode };
 
-// Order matters: the layout fills column 1 top-to-bottom, then column 2, etc.
-const FAQS: FaqItem[] = [
-  {
-    question: "Is Ledify free?",
-    answer: "Yes. Ledify is free to use, with no subscription required.",
-  },
-  {
-    question: "Can Ledify access any URL?",
-    answer:
-      "No. The page needs to be publicly accessible. Ledify can't read pages that require a login or payment.",
-  },
-  {
-    question: "Can I use a URL as my input?",
-    answer:
-      "Yes. You can paste a URL and Ledify will check whether the page can be reached and read.",
-  },
-  {
-    question: "What can I create with Ledify?",
-    answer:
-      "You can create a presentation, web page, or document from your content.",
-  },
-  {
-    question: "How long can my prompt be?",
-    answer: (
-      <>
-        Your prompt can be between{" "}
-        <strong className="font-semibold text-[#F5F3FF]">
-          {MIN_PROMPT_LENGTH} and {MAX_PROMPT_LENGTH.toLocaleString()}
-        </strong>{" "}
-        characters.
-      </>
-    ),
-  },
-  {
-    question: "How large can my file be?",
-    answer: (
-      <>
-        There&apos;s a maximum file-size limit of{" "}
-        <strong className="font-semibold text-[#F5F3FF]">
-          {MAX_FILE_SIZE_MB} MB
-        </strong>
-        .
-      </>
-    ),
-  },
-  {
-    question: "What types of files can I upload?",
-    answer: `You can upload ${ACCEPTED_FILE_LABEL} files. Ledify uses the content in your file to create your chosen output.`,
-  },
+// Exactly like the Figma: each inner list is one column, top to bottom
+const COLUMNS: FaqItem[][] = [
+  [
+    {
+      question: "Is Ledify free?",
+      answer: "Yes. Ledify is free to use, with no subscription required.",
+    },
+    {
+      question: "Can Ledify access any URL?",
+      answer:
+        "No. The page needs to be publicly accessible. Ledify can't read pages that require a login or payment.",
+    },
+  ],
+  [
+    {
+      question: "Can I use a URL as my input?",
+      answer:
+        "Yes. You can paste a URL and Ledify will check whether the page can be reached and read.",
+    },
+    {
+      question: "What can I create with Ledify?",
+      answer:
+        "You can create a presentation, web page, or document from your content.",
+    },
+  ],
+  [
+    {
+      question: "How long can my prompt be?",
+      answer: (
+        <>
+          Your prompt can be between{" "}
+          <strong className="font-semibold text-[#F5F3FF]">
+            {MIN_PROMPT_LENGTH} and {MAX_PROMPT_LENGTH.toLocaleString()}
+          </strong>{" "}
+          characters.
+        </>
+      ),
+    },
+    {
+      question: "How large can my file be?",
+      answer: (
+        <>
+          There&apos;s a maximum file-size limit of{" "}
+          <strong className="font-semibold text-[#F5F3FF]">
+            {MAX_FILE_SIZE_MB} MB
+          </strong>
+          .
+        </>
+      ),
+    },
+  ],
+  [
+    {
+      question: "What types of files can I upload?",
+      answer: `You can upload ${ACCEPTED_FILE_LABEL} files. Ledify uses the content in your file to create your chosen output.`,
+    },
+  ],
 ];
 
 export default function Faq() {
@@ -81,7 +89,7 @@ export default function Faq() {
       const mm = gsap.matchMedia();
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        // Header plays straight away when the page opens
+        // Heading and subtitle fade up when the page opens
         gsap.from("[data-reveal]", {
           autoAlpha: 0,
           y: 24,
@@ -90,64 +98,69 @@ export default function Faq() {
           stagger: 0.12,
         });
 
-        // Cards: on a big screen they're already in view, so this plays on load.
-        // On a phone, the lower cards wait until you scroll to them.
-        gsap.utils.toArray<HTMLElement>("[data-faq]").forEach((card, i) => {
-          gsap.from(card, {
-            autoAlpha: 0,
-            y: 30,
-            duration: 0.6,
-            ease: "power3.out",
-            delay: 0.3 + (i % 4) * 0.08,
-            clearProps: "transform",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 90%",
-              toggleActions: "play none none reverse",
-            },
-          });
+        // Cards fade up one after another when the grid scrolls into view
+        gsap.from("[data-faq]", {
+          autoAlpha: 0,
+          y: 24,
+          duration: 0.5,
+          ease: "power3.out",
+          stagger: 0.06,
+          delay: 0.2,
+          clearProps: "transform",
+          scrollTrigger: {
+            trigger: "[data-faq-grid]",
+            start: "top 90%",
+            once: true, // play one time, then leave everything visible
+          },
         });
       });
+
+      // Undo everything on unmount (and when React runs this twice in dev)
+      return () => mm.revert();
     },
     { scope: pageRef }
   );
 
   return (
-    <main
-      ref={pageRef}
-      className="min-h-screen w-full bg-[#0A0D18] px-6 pb-24 pt-36 md:pb-32"
-    >
-      <div className="mx-auto max-w-5xl">
+    <main ref={pageRef} className="w-full bg-[#0A0D18] px-6 pb-20 pt-32 md:pb-24">
+      <div className="mx-auto max-w-4xl">
         <h1
           data-reveal
-          className={`font-heading text-[36px] font-bold leading-[1.1] text-[#F5F3FF] md:text-[48px] ${bricolage.variable}`}
+          className={`font-heading text-[28px] font-bold leading-tight text-[#F5F3FF] md:text-[32px] ${bricolage.variable}`}
         >
           One more thing.
         </h1>
 
         <p
           data-reveal
-          className="mt-4 max-w-md text-[15px] leading-relaxed text-[#C9CBD6]"
+          className="mt-3 max-w-[300px] text-[13px] leading-relaxed text-[#C9CBD6]"
         >
-          Before you get started, here&apos;s some information that can make
+          Before you get started, here&apos;s some information that could make
           using Ledify even easier.
         </p>
 
-        <div className="mt-10 columns-1 gap-5 sm:columns-2 lg:columns-4">
-          {FAQS.map((faq) => (
-            <article
-              key={faq.question}
-              data-faq
-              className="mb-5 break-inside-avoid rounded-xl border border-white/10 bg-[#161A2C] p-5 transition-[border-color,translate] duration-300 hover:-translate-y-1 hover:border-[#7C5CFF]/40"
-            >
-              <h2 className="text-[17px] font-medium leading-snug text-[#F5F3FF]">
-                {faq.question}
-              </h2>
-              <div aria-hidden="true" className="mt-3 h-px w-10 bg-white/25" />
-              <p className="mt-4 text-sm leading-relaxed text-[#C9CBD6]">
-                {faq.answer}
-              </p>
-            </article>
+        <div
+          data-faq-grid
+          className="mt-8 grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {COLUMNS.map((column, i) => (
+            <div key={i} className="flex flex-col gap-3">
+              {column.map((faq) => (
+                <article
+                  key={faq.question}
+                  data-faq
+                  className="rounded-lg border border-white/10 bg-[#161A2C] p-4 transition-[border-color,translate] duration-300 hover:-translate-y-1 hover:border-[#7C5CFF]/40"
+                >
+                  <h2 className="text-sm font-medium leading-snug text-[#F5F3FF]">
+                    {faq.question}
+                  </h2>
+                  <div aria-hidden="true" className="mt-2 h-px w-6 bg-white/25" />
+                  <p className="mt-3 text-xs leading-relaxed text-[#C9CBD6]">
+                    {faq.answer}
+                  </p>
+                </article>
+              ))}
+            </div>
           ))}
         </div>
       </div>
