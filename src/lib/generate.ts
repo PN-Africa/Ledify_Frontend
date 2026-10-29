@@ -144,8 +144,7 @@ export async function generateContent(
   const preview = result?.preview;
   const artifacts = result?.artifacts;
 
-  console.log("SLIDE 0:", JSON.stringify(preview?.slides?.[0], null, 2));
-
+console.log("DOC:", JSON.stringify(artifacts, null, 2));
   // The backend returns previewId inside preview.
   // Keep artifacts.id as a fallback for compatibility.
   const previewId =

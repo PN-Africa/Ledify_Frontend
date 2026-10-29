@@ -17,6 +17,7 @@ export default function CreateInput() {
   const [draft, setDraftState] = useState<Draft | null>(null);
 
    useEffect(() => {
+      console.log("Draft on create page:", getDraft()); // TEMP
     // Anything typed on the landing page, or an empty box
     setDraftState(getDraft() ?? { prompt: "", files: [], link: [] });
   }, []);

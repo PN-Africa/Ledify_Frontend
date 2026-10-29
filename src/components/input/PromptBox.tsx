@@ -204,8 +204,6 @@ onContinue({ prompt: prompt.trim(), files, link: links });
     }
   }
 
-
-
   return (
     <div className="flex w-full flex-col items-center">
       <div className="group relative w-full">

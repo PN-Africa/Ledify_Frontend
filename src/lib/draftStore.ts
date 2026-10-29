@@ -1,10 +1,11 @@
 export type OutputFormat = "presentation" | "webpage" | "document";
-
 // Extra settings per format. More can be added later (tone, length, ...)
-export type DraftOptions = {
-  slideCount?: number;
-};
 
+export type DocumentFormat = "docx" | "pdf";
+export type DraftOptions = {
+  slideCount?: number;        // presentations only
+  documentFormat?: DocumentFormat; // documents only
+};
 export type Draft = {
   prompt: string;
   files: File[];

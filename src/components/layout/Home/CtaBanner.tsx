@@ -147,7 +147,7 @@ export default function CtaBanner() {
         <Link
           href="/#get-started"
           data-cta
-          className="shrink-0 rounded-xl absolute z-0 bg-[#0B0D17] px-14 py-5 text-lg font-semibold text-white transition hover:bg-[#1A1D2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+          className="shrink-0 rounded-xl   bg-[#0B0D17] px-14 py-5 text-lg font-semibold text-white transition hover:bg-[#1A1D2B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
         >
           Get Started
         </Link>

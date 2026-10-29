@@ -74,6 +74,7 @@ useEffect(() => {
     .then(([result]) => {
       if (controller.signal.aborted) return;
       saveResult(result);
+      clearDraft();
       setActiveStep(STEPS.length);
       redirectTimer = setTimeout(() => {
         router.push(`/create/result?id=${result.id}`);
