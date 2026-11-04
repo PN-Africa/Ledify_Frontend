@@ -18,6 +18,11 @@ import {
 
 const MAX_FILES = 5;
 const MAX_LINKS = 3;
+type LinkCheck = {
+  ok: boolean;
+  reason?: "invalid" | "timeout" | "unreachable" | "status";
+  status?: number;
+};
 
 const PLACEHOLDER_PROMPTS = [
   "Create a 5-slide presentation about AI in healthcare...",
@@ -84,16 +89,16 @@ export default function PromptBox({
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
-
+  const [checkingLink, setCheckingLink] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const linkInputRef = useRef<HTMLInputElement>(null);
 
   const promptIsValid = prompt.trim().length >= MIN_PROMPT_LENGTH;
   const hasAttachments = files.length > 0 || links.length > 0;
   const canContinue = promptIsValid || hasAttachments;
-   const showLengthWarning =
-    variant === "page" && prompt.length > 0 && !promptIsValid && !hasAttachments;
-
+const showLengthWarning =
+  prompt.length > 0 && !promptIsValid && !hasAttachments;
+  
   useEffect(() => {
     setReducedMotion(
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -112,6 +117,21 @@ export default function PromptBox({
     ? PLACEHOLDER_PROMPTS[0]
     : `${typedPlaceholder}|`;
 
+
+    function linkProblemMessage(result: LinkCheck): string {
+  if (result.reason === "invalid") return "That doesn't look like a valid link.";
+  if (result.reason === "timeout")
+    return "That website took too long to respond. Check the link or try another one.";
+  if (result.reason === "unreachable")
+    return "We couldn't find that website. Check the spelling of the link.";
+
+  const s = result.status ?? 0;
+  if (s === 404 || s === 410) return "That page doesn't exist (error 404). Check the link.";
+  if (s === 401 || s === 403)
+    return "That page needs a login or blocks access, so Ledify can't read it.";
+  if (s >= 500) return "That website is having problems right now. Try again later or use another link.";
+  return `That link didn't work (error ${s}). Try another one.`;
+}
   // ---------- Files ----------
   function handleFilesSelected(e: ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files;
@@ -145,10 +165,11 @@ export default function PromptBox({
   }
 
   // ---------- Links ----------
-  function addLink() {
+   async function addLink() {
     const value = linkInput.trim();
-    if (!value) return;
+    if (!value || checkingLink) return;
 
+    // 1. Quick check in the browser: does it look like a link?
     let url: URL;
     try {
       url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
@@ -165,17 +186,44 @@ export default function PromptBox({
       setError(`You can add up to ${MAX_LINKS} links.`);
       return;
     }
+    if (links.includes(url.href)) {
+      // Already added: just close the input
+      setLinkInput("");
+      setShowLinkInput(false);
+      return;
+    }
 
-    if (!links.includes(url.href)) setLinks([...links, url.href]);
-    setLinkInput("");
-    setShowLinkInput(false);
+    // 2. Ask our server whether the page really exists
+    setCheckingLink(true);
     setError(null);
+
+    try {
+      const res = await fetch("/api/check-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: url.href }),
+      });
+      const result: LinkCheck = await res.json();
+
+      if (!result.ok) {
+        setError(linkProblemMessage(result)); // show why, and don't add it
+        return;
+      }
+
+      setLinks((prev) => [...prev, url.href]);
+      setLinkInput("");
+      setShowLinkInput(false);
+    } catch {
+      setError("We couldn't check that link. Check your connection and try again.");
+    } finally {
+      setCheckingLink(false); // runs whether it worked or not
+    }
   }
 
   function handleLinkKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
       e.preventDefault();
-      addLink();
+      void addLink();
     }
     if (e.key === "Escape") {
       setShowLinkInput(false);
@@ -190,12 +238,14 @@ export default function PromptBox({
   // ---------- Continue ----------
   const isPage = variant === "page";
 
-  const continueEnabled = isPage ? canContinue : true;
+  // Both pages need a valid prompt (or a file/link) before continuing
+const continueEnabled = canContinue;
 
   function handleContinue() {
     if (!continueEnabled) return;
 onContinue({ prompt: prompt.trim(), files, link: links });
   }
+  
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -288,12 +338,13 @@ onContinue({ prompt: prompt.trim(), files, link: links });
                 className="h-11 flex-1 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-[#F5F3FF] placeholder:text-[#6F6B82] focus:border-[#7C5CFF] focus:outline-none"
               />
               <button
-                type="button"
-                onClick={addLink}
-                className="h-11 rounded-xl bg-[#7C5CFF] px-4 text-sm font-semibold text-white transition hover:bg-[#6B4BF0]"
-              >
-                Add
-              </button>
+  type="button"
+  onClick={() => void addLink()}
+  disabled={checkingLink}
+  className="h-11 rounded-xl bg-[#7C5CFF] px-4 text-sm font-semibold text-white transition hover:bg-[#6B4BF0] disabled:cursor-wait disabled:opacity-60"
+>
+  {checkingLink ? "Checking…" : "Add"}
+</button>
             </div>
           )}
 

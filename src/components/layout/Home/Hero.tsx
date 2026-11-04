@@ -24,7 +24,7 @@ export default function Hero() {
   
   function handleContinue(draft: Draft) {
     setDraft(draft);
-    router.push("/create");
+      router.push("/create/format");
   }
 
   const containerRef = useRef<HTMLDivElement>(null);
